@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <circle cx="50" cy="50" r="49" fill="#0a0a0f"/>
+  <circle cx="50" cy="50" r="46" fill="none" stroke="#e11d48" stroke-width="4"/>
+  <text x="50" y="67" font-family="Arial Black, sans-serif" font-weight="900" font-size="38" fill="white" text-anchor="middle" letter-spacing="-1">SP</text>
+</svg>

@@ -1,0 +1,24 @@
+{
+  "name": "SPLINT.AI — AI решатель задач",
+  "short_name": "SPLINT.AI",
+  "description": "Задай любой вопрос или скинь фото задачи. Любой предмет · Любой язык.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#08080f",
+  "theme_color": "#08080f",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
