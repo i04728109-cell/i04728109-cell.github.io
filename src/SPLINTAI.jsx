@@ -4,7 +4,15 @@ const PROXY_URL = "https://splintai-api.vercel.app/api/chat";
 const TEXT_MODEL = "llama-3.3-70b-versatile";
 const VISION_MODEL = "meta-llama/llama-4-scout-17b-16e-instruct";
 
+const now = new Date();
+const dateStr = now.toLocaleDateString("ru-RU", { weekday: "long", year: "numeric", month: "long", day: "numeric" });
+const timeStr = now.toLocaleTimeString("ru-RU", { hour: "2-digit", minute: "2-digit" });
+
 const SYSTEM_PROMPT = `You are SPLINT.AI — a precise academic problem solver and tutor.
+
+Today is ${dateStr}, time: ${timeStr}. You are fully aware of events and knowledge up to 2026. When asked about the current date, time, day, or year — answer using this information.
+
+You use the latest 2026 methods and approaches in math, physics, chemistry and other subjects.
 
 RULE 1 — LANGUAGE: Always respond in the EXACT same language the user writes in. Russian → Russian. Uzbek → Uzbek. English → English.
 
