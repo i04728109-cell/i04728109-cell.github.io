@@ -1,6 +1,6 @@
 import { useState, useRef, useCallback, useEffect } from "react";
 
-const PROXY_URL = "https://splintai.vercel.app/api/chat";
+const PROXY_URL = "https://splintai-api.vercel.app/api/chat";
 const TEXT_MODEL = "llama-3.3-70b-versatile";
 const VISION_MODEL = "meta-llama/llama-4-scout-17b-16e-instruct";
 
@@ -461,8 +461,12 @@ export default function SPLINTAI() {
           </div>
           <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
             {installPrompt && (
-              <button className="install-btn" onClick={handleInstall} style={{ background: "#e11d48", border: "none", borderRadius: 8, padding: "0.35rem 0.8rem", fontSize: "0.75rem", color: "white", cursor: "pointer", fontFamily: "'Inter', sans-serif", transition: "all 0.2s", fontWeight: 600 }}>
-                📲 Установить
+              <button className="install-btn" onClick={handleInstall} style={{ background: "#e11d48", border: "none", borderRadius: 8, padding: "0.35rem 0.7rem", fontSize: "0.75rem", color: "white", cursor: "pointer", fontFamily: "'Inter', sans-serif", transition: "all 0.2s", fontWeight: 600, display: "flex", alignItems: "center", gap: 6 }}>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                  <rect x="5" y="2" width="14" height="20" rx="2" ry="2"/>
+                  <line x1="12" y1="18" x2="12.01" y2="18"/>
+                </svg>
+                Установить
               </button>
             )}
             {messages.length > 0 && (
@@ -490,11 +494,7 @@ export default function SPLINTAI() {
                 <p style={{ color: textMuted, fontSize: "0.88rem", lineHeight: 1.6 }}>
                   Задай любой вопрос или скинь фото задачи<br />Любой предмет · Любой язык
                 </p>
-                {installPrompt && (
-                  <button className="install-btn" onClick={handleInstall} style={{ marginTop: "1.5rem", background: "#e11d48", border: "none", borderRadius: 12, padding: "0.7rem 1.5rem", fontSize: "0.9rem", color: "white", cursor: "pointer", fontFamily: "'Inter', sans-serif", fontWeight: 600, transition: "all 0.2s" }}>
-                    📲 Установить приложение
-                  </button>
-                )}
+
               </div>
             )}
 
