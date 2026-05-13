@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <!-- Black background circle -->
+  <circle cx="32" cy="32" r="32" fill="#0a0a0f"/>
+  <!-- Red border ring -->
+  <circle cx="32" cy="32" r="30" fill="none" stroke="#e11d48" stroke-width="2.5"/>
+  <!-- SP text -->
+  <text
+    x="32"
+    y="42"
+    text-anchor="middle"
+    font-family="Arial Black, Arial, sans-serif"
+    font-weight="900"
+    font-size="26"
+    fill="white"
+    letter-spacing="-1"
+  >SP</text>
+</svg>
