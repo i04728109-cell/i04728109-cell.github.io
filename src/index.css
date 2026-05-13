@@ -1,0 +1,9 @@
+.sidebar-desktop {
+  display: flex !important;
+}
+
+@media (max-width: 767px) {
+  .sidebar-desktop {
+    display: none !important;
+  }
+}
