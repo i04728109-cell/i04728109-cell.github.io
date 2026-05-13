@@ -305,6 +305,7 @@ export default function SPLINTAI() {
   const [dark, setDark] = useState(true);
   const [chats, setChats] = useState(() => loadChats());
   const [activeChatId, setActiveChatId] = useState(null);
+  const [isMobile, setIsMobile] = useState(() => typeof window !== 'undefined' && window.innerWidth < 768);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [input, setInput] = useState("");
   const [imageBase64, setImageBase64] = useState(null);
@@ -341,6 +342,12 @@ export default function SPLINTAI() {
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [activeMessages, loading]);
+
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < 768);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   useEffect(() => {
     const handler = (e) => { e.preventDefault(); setInstallPrompt(e); };
@@ -558,10 +565,10 @@ export default function SPLINTAI() {
             display: "flex",
             flexDirection: "column",
             flexShrink: 0,
-            position: window.innerWidth < 640 ? "fixed" : "relative",
+            position: isMobile ? "fixed" : "relative",
             left: 0, top: 0, bottom: 0,
             zIndex: 50,
-            transform: window.innerWidth < 640 ? (sidebarOpen ? "translateX(0)" : "translateX(-100%)") : "translateX(0)",
+            transform: isMobile ? (sidebarOpen ? "translateX(0)" : "translateX(-260px)") : "translateX(0)",
             transition: "transform 0.25s cubic-bezier(0.4,0,0.2,1)",
           }}
         >
