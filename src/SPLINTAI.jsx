@@ -117,6 +117,27 @@ function formatMath(text) {
     .replace(/\^(\d)/g, (_, n) => sup[n] || `^${n}`);
 }
 
+function generateId() {
+  return Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+}
+
+function getChatTitle(messages) {
+  const first = messages.find(m => m.role === "user" && m.text);
+  if (!first) return "Новый чат";
+  return first.text.length > 40 ? first.text.slice(0, 40) + "…" : first.text;
+}
+
+function loadChats() {
+  try {
+    const raw = localStorage.getItem("splintai_chats");
+    return raw ? JSON.parse(raw) : [];
+  } catch { return []; }
+}
+
+function saveChats(chats) {
+  try { localStorage.setItem("splintai_chats", JSON.stringify(chats)); } catch {}
+}
+
 function Logo({ size = 26 }) {
   const fontSize = Math.round(size * 0.38);
   return (
@@ -128,7 +149,7 @@ function Logo({ size = 26 }) {
     }}>
       <span style={{
         fontFamily: "Arial Black, sans-serif", fontWeight: 900,
-        fontSize: fontSize, color: "white", letterSpacing: -0.5,
+        fontSize, color: "white", letterSpacing: -0.5,
         lineHeight: 1, userSelect: "none",
       }}>SP</span>
     </div>
@@ -172,6 +193,46 @@ function MoonIcon() {
   );
 }
 
+function PlusIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round">
+      <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+    </svg>
+  );
+}
+
+function TrashIcon() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/>
+    </svg>
+  );
+}
+
+function MenuIcon() {
+  return (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+      <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/>
+    </svg>
+  );
+}
+
+function CloseIcon() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+      <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+    </svg>
+  );
+}
+
+function ChatIcon() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+    </svg>
+  );
+}
+
 function MessageText({ text, dark }) {
   const lines = text.split("\n").reduce((acc, line) => {
     if (line.trim() === "" && acc[acc.length - 1]?.trim() === "") return acc;
@@ -199,76 +260,27 @@ function MessageText({ text, dark }) {
           const label = trimmed.slice(0, colonIdx + 1);
           const val = trimmed.slice(colonIdx + 1).trim();
           return (
-            <div key={i} style={{
-              marginTop: "1rem", padding: "0.75rem 1rem",
-              background: "rgba(225,29,72,0.08)",
-              border: "1px solid rgba(225,29,72,0.3)",
-              borderRadius: 10,
-              display: "flex", gap: 8, alignItems: "baseline", flexWrap: "wrap"
-            }}>
+            <div key={i} style={{ marginTop: "1rem", padding: "0.75rem 1rem", background: "rgba(225,29,72,0.08)", border: "1px solid rgba(225,29,72,0.3)", borderRadius: 10, display: "flex", gap: 8, alignItems: "baseline", flexWrap: "wrap" }}>
               <span style={{ color: "#e11d48", fontWeight: 700, flexShrink: 0 }}>{label}</span>
               <span style={{ color: dark ? "#f0f0ff" : "#12121e", fontWeight: 600 }}>{val}</span>
             </div>
           );
         }
-
-        if (isDano) {
-          return (
-            <div key={i} style={{
-              marginBottom: "0.25rem", padding: "0.5rem 0.9rem",
-              background: dark ? "rgba(99,102,241,0.08)" : "rgba(99,102,241,0.06)",
-              border: `1px solid ${dark ? "rgba(99,102,241,0.25)" : "rgba(99,102,241,0.2)"}`,
-              borderRadius: "10px 10px 0 0",
-              fontWeight: 700, color: dark ? "#a5b4fc" : "#4f46e5",
-            }}>{trimmed}</div>
-          );
-        }
-
-        if (isResh) {
-          return (
-            <div key={i} style={{
-              marginTop: "0.75rem", fontWeight: 700, fontSize: "0.95rem",
-              color: dark ? "#e8e6f8" : "#12121e",
-              paddingBottom: "0.3rem",
-              borderBottom: `2px solid ${dark ? "#2a2a3e" : "#e0e0ea"}`,
-            }}>{trimmed}</div>
-          );
-        }
-
-        if (isMetod) {
-          return (
-            <div key={i} style={{
-              marginTop: "0.4rem", marginBottom: "0.2rem",
-              fontSize: "0.82rem", fontStyle: "italic",
-              color: dark ? "#7070a0" : "#8080a0",
-              padding: "0.25rem 0.7rem",
-              background: dark ? "rgba(255,255,255,0.03)" : "rgba(0,0,0,0.03)",
-              borderRadius: 6,
-              borderLeft: "2px solid #e11d48",
-            }}>{trimmed}</div>
-          );
-        }
-
-        if (isPust) {
-          return (
-            <div key={i} style={{
-              fontStyle: "italic",
-              color: dark ? "#9090c0" : "#5050a0",
-              marginTop: "0.2rem",
-            }}>{trimmed}</div>
-          );
-        }
-
-        if (isStep) {
-          return (
-            <div key={i} style={{
-              fontWeight: 700, color: dark ? "#c8c8f8" : "#12121e",
-              marginTop: "0.75rem", paddingBottom: "0.2rem",
-              borderBottom: `1px solid ${border2}`,
-            }}>{trimmed}</div>
-          );
-        }
-
+        if (isDano) return (
+          <div key={i} style={{ marginBottom: "0.25rem", padding: "0.5rem 0.9rem", background: dark ? "rgba(99,102,241,0.08)" : "rgba(99,102,241,0.06)", border: `1px solid ${dark ? "rgba(99,102,241,0.25)" : "rgba(99,102,241,0.2)"}`, borderRadius: "10px 10px 0 0", fontWeight: 700, color: dark ? "#a5b4fc" : "#4f46e5" }}>{trimmed}</div>
+        );
+        if (isResh) return (
+          <div key={i} style={{ marginTop: "0.75rem", fontWeight: 700, fontSize: "0.95rem", color: dark ? "#e8e6f8" : "#12121e", paddingBottom: "0.3rem", borderBottom: `2px solid ${dark ? "#2a2a3e" : "#e0e0ea"}` }}>{trimmed}</div>
+        );
+        if (isMetod) return (
+          <div key={i} style={{ marginTop: "0.4rem", marginBottom: "0.2rem", fontSize: "0.82rem", fontStyle: "italic", color: dark ? "#7070a0" : "#8080a0", padding: "0.25rem 0.7rem", background: dark ? "rgba(255,255,255,0.03)" : "rgba(0,0,0,0.03)", borderRadius: 6, borderLeft: "2px solid #e11d48" }}>{trimmed}</div>
+        );
+        if (isPust) return (
+          <div key={i} style={{ fontStyle: "italic", color: dark ? "#9090c0" : "#5050a0", marginTop: "0.2rem" }}>{trimmed}</div>
+        );
+        if (isStep) return (
+          <div key={i} style={{ fontWeight: 700, color: dark ? "#c8c8f8" : "#12121e", marginTop: "0.75rem", paddingBottom: "0.2rem", borderBottom: `1px solid ${border2}` }}>{trimmed}</div>
+        );
         if (isDashRow) {
           const sepMatch = trimmed.match(/\s[—–-]\s/);
           if (sepMatch) {
@@ -276,23 +288,14 @@ function MessageText({ text, dark }) {
             const left = trimmed.slice(0, sepIdx);
             const right = trimmed.slice(sepIdx + sepMatch[0].length);
             return (
-              <div key={i} style={{
-                display: "flex", justifyContent: "space-between", gap: 12,
-                padding: "0.3rem 0.5rem", borderBottom: `1px solid ${border2}`,
-                background: dark ? "rgba(255,255,255,0.02)" : "rgba(0,0,0,0.02)",
-              }}>
+              <div key={i} style={{ display: "flex", justifyContent: "space-between", gap: 12, padding: "0.3rem 0.5rem", borderBottom: `1px solid ${border2}`, background: dark ? "rgba(255,255,255,0.02)" : "rgba(0,0,0,0.02)" }}>
                 <span style={{ color: dark ? "#9090b8" : "#606080" }}>{left}</span>
                 <span style={{ color: dark ? "#e8e6f8" : "#12121e", fontWeight: 500 }}>{right}</span>
               </div>
             );
           }
         }
-
-        return (
-          <div key={i} style={{ color: dark ? "#c8c8e0" : "#2a2a3a" }}>
-            {trimmed}
-          </div>
-        );
+        return <div key={i} style={{ color: dark ? "#c8c8e0" : "#2a2a3a" }}>{trimmed}</div>;
       })}
     </div>
   );
@@ -300,7 +303,9 @@ function MessageText({ text, dark }) {
 
 export default function SPLINTAI() {
   const [dark, setDark] = useState(true);
-  const [messages, setMessages] = useState([]);
+  const [chats, setChats] = useState(() => loadChats());
+  const [activeChatId, setActiveChatId] = useState(null);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const [input, setInput] = useState("");
   const [imageBase64, setImageBase64] = useState(null);
   const [imageType, setImageType] = useState(null);
@@ -308,6 +313,7 @@ export default function SPLINTAI() {
   const [isDragging, setIsDragging] = useState(false);
   const [loading, setLoading] = useState(false);
   const [installPrompt, setInstallPrompt] = useState(null);
+  const [deleteConfirm, setDeleteConfirm] = useState(null);
   const fileInputRef = useRef(null);
   const bottomRef = useRef(null);
   const textareaRef = useRef(null);
@@ -321,26 +327,65 @@ export default function SPLINTAI() {
   const inputBg = d ? "#0d0d18" : "#ffffff";
   const userBubble = d ? "#1a1030" : "#f0effe";
   const userBubbleBorder = d ? "#3a2060" : "#d8d0fa";
+  const sidebarBg = d ? "#0c0c14" : "#f8f8fc";
+  const sidebarBorder = d ? "#1a1a2a" : "#e8e8f0";
+
+  const activeMessages = activeChatId
+    ? (chats.find(c => c.id === activeChatId)?.messages || [])
+    : [];
+
+  useEffect(() => {
+    saveChats(chats);
+  }, [chats]);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages, loading]);
+  }, [activeMessages, loading]);
 
-  // PWA install prompt
   useEffect(() => {
-    const handler = (e) => {
-      e.preventDefault();
-      setInstallPrompt(e);
-    };
+    const handler = (e) => { e.preventDefault(); setInstallPrompt(e); };
     window.addEventListener('beforeinstallprompt', handler);
     return () => window.removeEventListener('beforeinstallprompt', handler);
   }, []);
+
+  // Close sidebar on outside click (mobile)
+  useEffect(() => {
+    if (!sidebarOpen) return;
+    const handler = (e) => {
+      if (!e.target.closest('[data-sidebar]') && !e.target.closest('[data-menu-btn]')) {
+        setSidebarOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [sidebarOpen]);
 
   const handleInstall = async () => {
     if (!installPrompt) return;
     installPrompt.prompt();
     const { outcome } = await installPrompt.userChoice;
     if (outcome === 'accepted') setInstallPrompt(null);
+  };
+
+  const createNewChat = useCallback(() => {
+    const id = generateId();
+    const newChat = { id, messages: [], createdAt: Date.now() };
+    setChats(prev => [newChat, ...prev]);
+    setActiveChatId(id);
+    setSidebarOpen(false);
+    setInput("");
+    removeImage();
+  }, []);
+
+  const selectChat = (id) => {
+    setActiveChatId(id);
+    setSidebarOpen(false);
+  };
+
+  const deleteChat = (id) => {
+    setChats(prev => prev.filter(c => c.id !== id));
+    if (activeChatId === id) setActiveChatId(null);
+    setDeleteConfirm(null);
   };
 
   const loadImage = useCallback((file) => {
@@ -364,19 +409,33 @@ export default function SPLINTAI() {
     if (!imageBase64 && !input.trim()) return;
     if (loading) return;
 
+    // Create chat if none active
+    let chatId = activeChatId;
+    if (!chatId) {
+      chatId = generateId();
+      const newChat = { id: chatId, messages: [], createdAt: Date.now() };
+      setChats(prev => [newChat, ...prev]);
+      setActiveChatId(chatId);
+    }
+
     const userText = input.trim();
-    const userImage = imageBase64;
     const userPreview = previewSrc;
+    const userImgB64 = imageBase64;
 
     const userMsg = { role: "user", text: userText, image: userPreview };
-    setMessages(prev => [...prev, userMsg]);
+
+    setChats(prev => prev.map(c =>
+      c.id === chatId ? { ...c, messages: [...c.messages, userMsg] } : c
+    ));
+
     setInput("");
-    setImageBase64(null); setImageType(null); setPreviewSrc(null);
-    if (fileInputRef.current) fileInputRef.current.value = "";
+    removeImage();
     if (textareaRef.current) textareaRef.current.style.height = "40px";
     setLoading(true);
 
-    const history = [...messages, userMsg].slice(-10);
+    const currentMessages = [...(chats.find(c => c.id === chatId)?.messages || []), userMsg];
+    const history = currentMessages.slice(-10);
+
     const apiMessages = [
       { role: "system", content: SYSTEM_PROMPT },
       ...history.map((m) => {
@@ -401,7 +460,7 @@ export default function SPLINTAI() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          model: userImage ? VISION_MODEL : TEXT_MODEL,
+          model: userImgB64 ? VISION_MODEL : TEXT_MODEL,
           messages: apiMessages,
           max_tokens: 1200,
           temperature: 0.2,
@@ -409,17 +468,24 @@ export default function SPLINTAI() {
       });
       const data = await res.json();
       setLoading(false);
-      if (data.choices?.[0]?.message?.content) {
-        setMessages(prev => [...prev, {
-          role: "assistant",
-          text: cleanText(data.choices[0].message.content)
-        }]);
-      } else {
-        setMessages(prev => [...prev, { role: "assistant", text: "Не удалось получить ответ. Попробуй ещё раз.", error: true }]);
-      }
+      const assistantText = data.choices?.[0]?.message?.content
+        ? cleanText(data.choices[0].message.content)
+        : null;
+
+      setChats(prev => prev.map(c => {
+        if (c.id !== chatId) return c;
+        const assistantMsg = assistantText
+          ? { role: "assistant", text: assistantText }
+          : { role: "assistant", text: "Не удалось получить ответ. Попробуй ещё раз.", error: true };
+        return { ...c, messages: [...c.messages, assistantMsg] };
+      }));
     } catch {
       setLoading(false);
-      setMessages(prev => [...prev, { role: "assistant", text: "Ошибка подключения. Проверь интернет.", error: true }]);
+      setChats(prev => prev.map(c =>
+        c.id === chatId
+          ? { ...c, messages: [...c.messages, { role: "assistant", text: "Ошибка подключения. Проверь интернет.", error: true }] }
+          : c
+      ));
     }
   };
 
@@ -437,12 +503,27 @@ export default function SPLINTAI() {
     e.target.style.height = Math.min(e.target.scrollHeight, 140) + "px";
   };
 
+  // Group chats by date
+  const groupedChats = chats.reduce((acc, chat) => {
+    const d = new Date(chat.createdAt);
+    const today = new Date();
+    const yesterday = new Date(today); yesterday.setDate(today.getDate() - 1);
+    let group;
+    if (d.toDateString() === today.toDateString()) group = "Сегодня";
+    else if (d.toDateString() === yesterday.toDateString()) group = "Вчера";
+    else group = d.toLocaleDateString("ru-RU", { day: "numeric", month: "long" });
+    if (!acc[group]) acc[group] = [];
+    acc[group].push(chat);
+    return acc;
+  }, {});
+
   return (
     <>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=Inter:wght@300;400;500&display=swap');
         @keyframes fadeUp { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
         @keyframes pulse { 0%,100%{opacity:0.3} 50%{opacity:1} }
+        @keyframes slideIn { from{transform:translateX(-100%)} to{transform:translateX(0)} }
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body { background: ${bg}; }
         ::-webkit-scrollbar { width: 4px; }
@@ -454,152 +535,261 @@ export default function SPLINTAI() {
         .theme-btn:hover { opacity: 0.7; }
         .img-btn:hover { opacity: 0.7; }
         .remove-img:hover { background: rgba(220,50,50,0.8) !important; color: white !important; }
-        .clear-btn:hover { border-color: #e11d48 !important; color: #e11d48 !important; }
+        .chat-item:hover { background: ${d ? "rgba(255,255,255,0.04)" : "rgba(0,0,0,0.04)"} !important; }
+        .chat-item.active { background: ${d ? "rgba(225,29,72,0.08)" : "rgba(225,29,72,0.06)"} !important; border-left: 2px solid #e11d48 !important; }
+        .chat-delete:hover { color: #e11d48 !important; opacity: 1 !important; }
+        .new-chat-btn:hover { background: ${d ? "rgba(225,29,72,0.15)" : "rgba(225,29,72,0.08)"} !important; }
         .install-btn:hover { background: #be123c !important; }
+        .overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 40; }
       `}</style>
 
-      <div style={{ display: "flex", flexDirection: "column", height: "100vh", background: bg, color: textPrimary, fontFamily: "'Inter', sans-serif", transition: "all 0.3s" }}>
+      <div style={{ display: "flex", height: "100vh", background: bg, color: textPrimary, fontFamily: "'Inter', sans-serif", overflow: "hidden" }}>
 
-        <div style={{ background: surface, borderBottom: `1px solid ${border}`, padding: "0.75rem 1.25rem", display: "flex", alignItems: "center", justifyContent: "space-between", flexShrink: 0 }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-            <Logo size={32} />
-            <span style={{ fontFamily: "'Syne', sans-serif", fontWeight: 800, fontSize: "1.1rem", letterSpacing: "-0.02em" }}>
+        {/* Sidebar overlay for mobile */}
+        {sidebarOpen && <div className="overlay" onClick={() => setSidebarOpen(false)} />}
+
+        {/* SIDEBAR */}
+        <div
+          data-sidebar
+          style={{
+            width: 260,
+            background: sidebarBg,
+            borderRight: `1px solid ${sidebarBorder}`,
+            display: "flex",
+            flexDirection: "column",
+            flexShrink: 0,
+            position: window.innerWidth < 640 ? "fixed" : "relative",
+            left: 0, top: 0, bottom: 0,
+            zIndex: 50,
+            transform: window.innerWidth < 640 ? (sidebarOpen ? "translateX(0)" : "translateX(-100%)") : "translateX(0)",
+            transition: "transform 0.25s cubic-bezier(0.4,0,0.2,1)",
+          }}
+        >
+          {/* Sidebar header */}
+          <div style={{ padding: "0.9rem 1rem 0.75rem", borderBottom: `1px solid ${sidebarBorder}`, display: "flex", alignItems: "center", gap: 8 }}>
+            <Logo size={28} />
+            <span style={{ fontFamily: "'Syne', sans-serif", fontWeight: 800, fontSize: "1rem", letterSpacing: "-0.02em", flex: 1 }}>
               SPLINT<span style={{ color: "#e11d48" }}>.</span>AI
             </span>
           </div>
-          <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-            {installPrompt && (
-              <button className="install-btn" onClick={handleInstall} style={{ background: "#e11d48", border: "none", borderRadius: 8, padding: "0.35rem 0.7rem", fontSize: "0.75rem", color: "white", cursor: "pointer", fontFamily: "'Inter', sans-serif", transition: "all 0.2s", fontWeight: 600, display: "flex", alignItems: "center", gap: 6 }}>
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                  <rect x="5" y="2" width="14" height="20" rx="2" ry="2"/>
-                  <line x1="12" y1="18" x2="12.01" y2="18"/>
-                </svg>
-                Установить
-              </button>
-            )}
-            {messages.length > 0 && (
-              <button className="clear-btn" onClick={() => setMessages([])} style={{ background: "transparent", border: `1px solid ${border}`, borderRadius: 8, padding: "0.35rem 0.8rem", fontSize: "0.75rem", color: textMuted, cursor: "pointer", fontFamily: "'Inter', sans-serif", transition: "all 0.2s" }}>
-                Очистить
-              </button>
-            )}
-            <button className="theme-btn" onClick={() => setDark(!d)} style={{ background: "transparent", border: `1px solid ${border}`, borderRadius: 9, width: 34, height: 34, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", color: textMuted, transition: "all 0.2s" }}>
-              {d ? <SunIcon /> : <MoonIcon />}
+
+          {/* New chat button */}
+          <div style={{ padding: "0.75rem 0.75rem 0.5rem" }}>
+            <button
+              className="new-chat-btn"
+              onClick={createNewChat}
+              style={{ width: "100%", background: "transparent", border: `1px dashed ${d ? "#2a2a40" : "#d0d0e0"}`, borderRadius: 10, padding: "0.55rem 1rem", display: "flex", alignItems: "center", gap: 8, cursor: "pointer", color: textMuted, fontSize: "0.85rem", fontFamily: "'Inter', sans-serif", transition: "all 0.2s" }}
+            >
+              <PlusIcon />
+              Новый чат
             </button>
           </div>
-        </div>
 
-        <div style={{ flex: 1, overflowY: "auto", padding: "1.25rem 1rem" }}>
-          <div style={{ maxWidth: 680, margin: "0 auto" }}>
-
-            {messages.length === 0 && (
-              <div style={{ textAlign: "center", padding: "3rem 0 2rem", animation: "fadeUp 0.5s ease" }}>
-                <div style={{ display: "flex", justifyContent: "center", marginBottom: "1.25rem" }}>
-                  <Logo size={72} />
-                </div>
-                <h1 style={{ fontFamily: "'Syne', sans-serif", fontWeight: 800, fontSize: "clamp(2rem, 8vw, 3.5rem)", letterSpacing: "-0.03em", marginBottom: "0.5rem" }}>
-                  SPLINT<span style={{ color: "#e11d48" }}>.</span>AI
-                </h1>
-                <p style={{ color: textMuted, fontSize: "0.88rem", lineHeight: 1.6 }}>
-                  Задай любой вопрос или скинь фото задачи<br />Любой предмет · Любой язык
-                </p>
-
+          {/* Chat list */}
+          <div style={{ flex: 1, overflowY: "auto", padding: "0 0.5rem 1rem" }}>
+            {chats.length === 0 && (
+              <div style={{ textAlign: "center", color: textMuted, fontSize: "0.78rem", marginTop: "2rem", padding: "0 1rem" }}>
+                Пока нет чатов.<br />Начни новый разговор!
               </div>
             )}
-
-            {messages.map((msg, i) => (
-              <div key={i} style={{ marginBottom: "1.25rem", animation: "fadeUp 0.3s ease", display: "flex", flexDirection: "column", alignItems: msg.role === "user" ? "flex-end" : "flex-start" }}>
-                {msg.role === "user" ? (
-                  <div style={{ maxWidth: "80%", background: userBubble, border: `1px solid ${userBubbleBorder}`, borderRadius: "18px 18px 4px 18px", padding: "0.75rem 1rem" }}>
-                    {msg.image && (
-                      <img src={msg.image} alt="task" style={{ width: "100%", maxHeight: 200, objectFit: "contain", borderRadius: 10, marginBottom: msg.text ? "0.6rem" : 0, display: "block" }} />
-                    )}
-                    {msg.text && <div style={{ fontSize: "0.92rem", lineHeight: 1.6, color: textPrimary }}>{msg.text}</div>}
+            {Object.entries(groupedChats).map(([group, groupChats]) => (
+              <div key={group}>
+                <div style={{ fontSize: "0.68rem", color: textMuted, fontWeight: 600, letterSpacing: "0.06em", padding: "0.75rem 0.6rem 0.3rem", textTransform: "uppercase" }}>{group}</div>
+                {groupChats.map(chat => (
+                  <div
+                    key={chat.id}
+                    className={`chat-item${chat.id === activeChatId ? " active" : ""}`}
+                    onClick={() => selectChat(chat.id)}
+                    style={{ display: "flex", alignItems: "center", gap: 8, padding: "0.55rem 0.7rem", borderRadius: 9, cursor: "pointer", transition: "all 0.15s", borderLeft: "2px solid transparent", marginBottom: 2, position: "relative" }}
+                  >
+                    <span style={{ color: textMuted, flexShrink: 0, opacity: 0.6 }}><ChatIcon /></span>
+                    <span style={{ fontSize: "0.82rem", flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", color: chat.id === activeChatId ? (d ? "#e8e6f8" : "#12121e") : textMuted }}>
+                      {getChatTitle(chat.messages)}
+                    </span>
+                    <button
+                      className="chat-delete"
+                      onClick={(e) => { e.stopPropagation(); setDeleteConfirm(chat.id); }}
+                      style={{ background: "transparent", border: "none", cursor: "pointer", color: textMuted, opacity: 0.4, flexShrink: 0, display: "flex", alignItems: "center", padding: 2, transition: "all 0.15s", borderRadius: 4 }}
+                    >
+                      <TrashIcon />
+                    </button>
                   </div>
-                ) : (
-                  <div style={{ maxWidth: "92%", display: "flex", gap: 10, alignItems: "flex-start" }}>
-                    <div style={{ flexShrink: 0, marginTop: 2 }}><Logo size={26} /></div>
-                    <div style={{ background: surface, border: `1px solid ${border}`, borderRadius: "4px 18px 18px 18px", padding: "0.9rem 1.1rem", color: msg.error ? "#f87171" : textPrimary, flex: 1 }}>
-                      {msg.error
-                        ? <div style={{ fontSize: "0.9rem" }}>{msg.text}</div>
-                        : <MessageText text={msg.text} dark={d} />
-                      }
-                    </div>
-                  </div>
-                )}
+                ))}
               </div>
             ))}
+          </div>
 
-            {loading && (
-              <div style={{ display: "flex", gap: 10, alignItems: "flex-start", marginBottom: "1.25rem", animation: "fadeUp 0.3s ease" }}>
-                <div style={{ flexShrink: 0, marginTop: 2 }}><Logo size={26} /></div>
-                <div style={{ background: surface, border: `1px solid ${border}`, borderRadius: "4px 18px 18px 18px", padding: "0.85rem 1.25rem", display: "flex", gap: 5, alignItems: "center" }}>
-                  {[0, 1, 2].map(i => (
-                    <div key={i} style={{ width: 7, height: 7, borderRadius: "50%", background: "#e11d48", animation: `pulse 1.2s ease ${i * 0.2}s infinite` }} />
-                  ))}
-                </div>
-              </div>
-            )}
-
-            <div ref={bottomRef} />
+          {/* Sidebar footer */}
+          <div style={{ borderTop: `1px solid ${sidebarBorder}`, padding: "0.6rem 1rem", display: "flex", justifyContent: "center" }}>
+            <span style={{ fontSize: "0.65rem", color: "#e11d48", fontWeight: 600, letterSpacing: "0.08em" }}>by ismail</span>
           </div>
         </div>
 
-        <div
-          style={{ background: surface, borderTop: `1px solid ${border}`, padding: "0.85rem 1rem 1rem", flexShrink: 0 }}
-          onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
-          onDragLeave={() => setIsDragging(false)}
-          onDrop={handleDrop}
-        >
-          <div style={{ maxWidth: 680, margin: "0 auto" }}>
-            {previewSrc && (
-              <div style={{ marginBottom: "0.6rem", display: "inline-flex", position: "relative" }}>
-                <img src={previewSrc} alt="preview" style={{ height: 64, width: "auto", borderRadius: 10, border: `1px solid ${border}`, display: "block" }} />
-                <button className="remove-img" onClick={removeImage} style={{ position: "absolute", top: -6, right: -6, background: d ? "rgba(0,0,0,0.8)" : "rgba(255,255,255,0.9)", border: `1px solid ${border}`, borderRadius: "50%", width: 22, height: 22, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", color: textMuted, fontSize: 10, transition: "all 0.15s" }}>✕</button>
-              </div>
-            )}
+        {/* MAIN AREA */}
+        <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden", minWidth: 0 }}>
 
-            {isDragging && (
-              <div style={{ border: `2px dashed #e11d48`, borderRadius: 12, padding: "0.75rem", textAlign: "center", fontSize: "0.8rem", color: "#e11d48", marginBottom: "0.6rem", background: d ? "#0d0d1e" : "#fff0f3" }}>
-                Отпусти фото сюда
-              </div>
-            )}
-
-            <div style={{ display: "flex", gap: 8, alignItems: "flex-end" }}>
-              <button className="img-btn" onClick={() => fileInputRef.current?.click()} style={{ background: "transparent", border: `1px solid ${border}`, borderRadius: 10, width: 40, height: 40, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", flexShrink: 0, transition: "all 0.2s" }}>
-                <ImageIcon color={textMuted} />
-              </button>
-              <input ref={fileInputRef} type="file" accept="image/*" style={{ display: "none" }} onChange={(e) => loadImage(e.target.files[0])} />
-
-              <textarea
-                ref={textareaRef}
-                style={{ flex: 1, background: inputBg, border: `1px solid ${isDragging ? "#e11d48" : border}`, borderRadius: 12, color: textPrimary, fontSize: "0.92rem", padding: "0.65rem 0.9rem", resize: "none", outline: "none", lineHeight: 1.6, height: 40, minHeight: 40, maxHeight: 140, transition: "border 0.2s", overflow: "hidden" }}
-                placeholder="Напиши вопрос или задачу..."
-                value={input}
-                onChange={(e) => { setInput(e.target.value); autoResize(e); }}
-                onKeyDown={handleKeyDown}
-              />
-
+          {/* Header */}
+          <div style={{ background: surface, borderBottom: `1px solid ${border}`, padding: "0.75rem 1.25rem", display: "flex", alignItems: "center", justifyContent: "space-between", flexShrink: 0 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+              {/* Mobile menu button */}
               <button
-                className="send-btn"
-                onClick={send}
-                disabled={loading || (!input.trim() && !imageBase64)}
-                style={{ background: (loading || (!input.trim() && !imageBase64)) ? (d ? "#1a1a28" : "#e8e8f0") : "#e11d48", border: "none", borderRadius: 10, width: 40, height: 40, display: "flex", alignItems: "center", justifyContent: "center", cursor: (loading || (!input.trim() && !imageBase64)) ? "not-allowed" : "pointer", flexShrink: 0, transition: "all 0.2s", color: (loading || (!input.trim() && !imageBase64)) ? textMuted : "white" }}
+                data-menu-btn
+                onClick={() => setSidebarOpen(v => !v)}
+                style={{ background: "transparent", border: `1px solid ${border}`, borderRadius: 9, width: 34, height: 34, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", color: textMuted, flexShrink: 0 }}
               >
-                <SendIcon />
+                <MenuIcon />
+              </button>
+              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <Logo size={28} />
+                <span style={{ fontFamily: "'Syne', sans-serif", fontWeight: 800, fontSize: "1rem", letterSpacing: "-0.02em" }}>
+                  SPLINT<span style={{ color: "#e11d48" }}>.</span>AI
+                </span>
+              </div>
+            </div>
+            <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+              {installPrompt && (
+                <button className="install-btn" onClick={handleInstall} style={{ background: "#e11d48", border: "none", borderRadius: 8, padding: "0.35rem 0.7rem", fontSize: "0.75rem", color: "white", cursor: "pointer", fontFamily: "'Inter', sans-serif", transition: "all 0.2s", fontWeight: 600, display: "flex", alignItems: "center", gap: 6 }}>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                    <rect x="5" y="2" width="14" height="20" rx="2" ry="2"/><line x1="12" y1="18" x2="12.01" y2="18"/>
+                  </svg>
+                  Установить
+                </button>
+              )}
+              <button onClick={createNewChat} style={{ background: "transparent", border: `1px solid ${border}`, borderRadius: 8, padding: "0.35rem 0.8rem", fontSize: "0.75rem", color: textMuted, cursor: "pointer", fontFamily: "'Inter', sans-serif", transition: "all 0.2s", display: "flex", alignItems: "center", gap: 5 }}>
+                <PlusIcon /> Новый чат
+              </button>
+              <button className="theme-btn" onClick={() => setDark(!d)} style={{ background: "transparent", border: `1px solid ${border}`, borderRadius: 9, width: 34, height: 34, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", color: textMuted, transition: "all 0.2s" }}>
+                {d ? <SunIcon /> : <MoonIcon />}
               </button>
             </div>
+          </div>
 
-            <div style={{ textAlign: "center", marginTop: "0.5rem" }}>
-              <div style={{ fontSize: "0.68rem", color: textMuted }}>
-                Enter для отправки · Shift+Enter для новой строки
+          {/* Messages */}
+          <div style={{ flex: 1, overflowY: "auto", padding: "1.25rem 1rem" }}>
+            <div style={{ maxWidth: 680, margin: "0 auto" }}>
+
+              {activeMessages.length === 0 && (
+                <div style={{ textAlign: "center", padding: "3rem 0 2rem", animation: "fadeUp 0.5s ease" }}>
+                  <div style={{ display: "flex", justifyContent: "center", marginBottom: "1.25rem" }}>
+                    <Logo size={72} />
+                  </div>
+                  <h1 style={{ fontFamily: "'Syne', sans-serif", fontWeight: 800, fontSize: "clamp(2rem, 8vw, 3.5rem)", letterSpacing: "-0.03em", marginBottom: "0.5rem" }}>
+                    SPLINT<span style={{ color: "#e11d48" }}>.</span>AI
+                  </h1>
+                  <p style={{ color: textMuted, fontSize: "0.88rem", lineHeight: 1.6 }}>
+                    Задай любой вопрос или скинь фото задачи<br />Любой предмет · Любой язык
+                  </p>
+                </div>
+              )}
+
+              {activeMessages.map((msg, i) => (
+                <div key={i} style={{ marginBottom: "1.25rem", animation: "fadeUp 0.3s ease", display: "flex", flexDirection: "column", alignItems: msg.role === "user" ? "flex-end" : "flex-start" }}>
+                  {msg.role === "user" ? (
+                    <div style={{ maxWidth: "80%", background: userBubble, border: `1px solid ${userBubbleBorder}`, borderRadius: "18px 18px 4px 18px", padding: "0.75rem 1rem" }}>
+                      {msg.image && (
+                        <img src={msg.image} alt="task" style={{ width: "100%", maxHeight: 200, objectFit: "contain", borderRadius: 10, marginBottom: msg.text ? "0.6rem" : 0, display: "block" }} />
+                      )}
+                      {msg.text && <div style={{ fontSize: "0.92rem", lineHeight: 1.6, color: textPrimary }}>{msg.text}</div>}
+                    </div>
+                  ) : (
+                    <div style={{ maxWidth: "92%", display: "flex", gap: 10, alignItems: "flex-start" }}>
+                      <div style={{ flexShrink: 0, marginTop: 2 }}><Logo size={26} /></div>
+                      <div style={{ background: surface, border: `1px solid ${border}`, borderRadius: "4px 18px 18px 18px", padding: "0.9rem 1.1rem", color: msg.error ? "#f87171" : textPrimary, flex: 1 }}>
+                        {msg.error
+                          ? <div style={{ fontSize: "0.9rem" }}>{msg.text}</div>
+                          : <MessageText text={msg.text} dark={d} />
+                        }
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ))}
+
+              {loading && (
+                <div style={{ display: "flex", gap: 10, alignItems: "flex-start", marginBottom: "1.25rem", animation: "fadeUp 0.3s ease" }}>
+                  <div style={{ flexShrink: 0, marginTop: 2 }}><Logo size={26} /></div>
+                  <div style={{ background: surface, border: `1px solid ${border}`, borderRadius: "4px 18px 18px 18px", padding: "0.85rem 1.25rem", display: "flex", gap: 5, alignItems: "center" }}>
+                    {[0, 1, 2].map(i => (
+                      <div key={i} style={{ width: 7, height: 7, borderRadius: "50%", background: "#e11d48", animation: `pulse 1.2s ease ${i * 0.2}s infinite` }} />
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              <div ref={bottomRef} />
+            </div>
+          </div>
+
+          {/* Input area */}
+          <div
+            style={{ background: surface, borderTop: `1px solid ${border}`, padding: "0.85rem 1rem 1rem", flexShrink: 0 }}
+            onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
+            onDragLeave={() => setIsDragging(false)}
+            onDrop={handleDrop}
+          >
+            <div style={{ maxWidth: 680, margin: "0 auto" }}>
+              {previewSrc && (
+                <div style={{ marginBottom: "0.6rem", display: "inline-flex", position: "relative" }}>
+                  <img src={previewSrc} alt="preview" style={{ height: 64, width: "auto", borderRadius: 10, border: `1px solid ${border}`, display: "block" }} />
+                  <button className="remove-img" onClick={removeImage} style={{ position: "absolute", top: -6, right: -6, background: d ? "rgba(0,0,0,0.8)" : "rgba(255,255,255,0.9)", border: `1px solid ${border}`, borderRadius: "50%", width: 22, height: 22, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", color: textMuted, fontSize: 10, transition: "all 0.15s" }}>✕</button>
+                </div>
+              )}
+
+              {isDragging && (
+                <div style={{ border: `2px dashed #e11d48`, borderRadius: 12, padding: "0.75rem", textAlign: "center", fontSize: "0.8rem", color: "#e11d48", marginBottom: "0.6rem", background: d ? "#0d0d1e" : "#fff0f3" }}>
+                  Отпусти фото сюда
+                </div>
+              )}
+
+              <div style={{ display: "flex", gap: 8, alignItems: "flex-end" }}>
+                <button className="img-btn" onClick={() => fileInputRef.current?.click()} style={{ background: "transparent", border: `1px solid ${border}`, borderRadius: 10, width: 40, height: 40, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", flexShrink: 0, transition: "all 0.2s" }}>
+                  <ImageIcon color={textMuted} />
+                </button>
+                <input ref={fileInputRef} type="file" accept="image/*" style={{ display: "none" }} onChange={(e) => loadImage(e.target.files[0])} />
+
+                <textarea
+                  ref={textareaRef}
+                  style={{ flex: 1, background: inputBg, border: `1px solid ${isDragging ? "#e11d48" : border}`, borderRadius: 12, color: textPrimary, fontSize: "0.92rem", padding: "0.65rem 0.9rem", resize: "none", outline: "none", lineHeight: 1.6, height: 40, minHeight: 40, maxHeight: 140, transition: "border 0.2s", overflow: "hidden" }}
+                  placeholder="Напиши вопрос или задачу..."
+                  value={input}
+                  onChange={(e) => { setInput(e.target.value); autoResize(e); }}
+                  onKeyDown={handleKeyDown}
+                />
+
+                <button
+                  className="send-btn"
+                  onClick={send}
+                  disabled={loading || (!input.trim() && !imageBase64)}
+                  style={{ background: (loading || (!input.trim() && !imageBase64)) ? (d ? "#1a1a28" : "#e8e8f0") : "#e11d48", border: "none", borderRadius: 10, width: 40, height: 40, display: "flex", alignItems: "center", justifyContent: "center", cursor: (loading || (!input.trim() && !imageBase64)) ? "not-allowed" : "pointer", flexShrink: 0, transition: "all 0.2s", color: (loading || (!input.trim() && !imageBase64)) ? textMuted : "white" }}
+                >
+                  <SendIcon />
+                </button>
               </div>
-              <div style={{ fontSize: "0.65rem", color: "#e11d48", fontWeight: 600, letterSpacing: "0.08em", marginTop: "0.2rem" }}>
-                by ismail
+
+              <div style={{ textAlign: "center", marginTop: "0.5rem" }}>
+                <div style={{ fontSize: "0.68rem", color: textMuted }}>
+                  Enter для отправки · Shift+Enter для новой строки
+                </div>
               </div>
             </div>
           </div>
         </div>
       </div>
+
+      {/* Delete confirm modal */}
+      {deleteConfirm && (
+        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)", zIndex: 100, display: "flex", alignItems: "center", justifyContent: "center" }}>
+          <div style={{ background: surface, border: `1px solid ${border}`, borderRadius: 16, padding: "1.5rem", maxWidth: 300, width: "90%", textAlign: "center", animation: "fadeUp 0.2s ease" }}>
+            <div style={{ fontSize: "1.5rem", marginBottom: "0.75rem" }}>🗑️</div>
+            <div style={{ fontWeight: 600, marginBottom: "0.4rem", color: textPrimary }}>Удалить чат?</div>
+            <div style={{ fontSize: "0.82rem", color: textMuted, marginBottom: "1.25rem" }}>Это действие нельзя отменить</div>
+            <div style={{ display: "flex", gap: 8 }}>
+              <button onClick={() => setDeleteConfirm(null)} style={{ flex: 1, background: "transparent", border: `1px solid ${border}`, borderRadius: 10, padding: "0.6rem", cursor: "pointer", color: textMuted, fontFamily: "'Inter', sans-serif", fontSize: "0.85rem" }}>Отмена</button>
+              <button onClick={() => deleteChat(deleteConfirm)} style={{ flex: 1, background: "#e11d48", border: "none", borderRadius: 10, padding: "0.6rem", cursor: "pointer", color: "white", fontFamily: "'Inter', sans-serif", fontSize: "0.85rem", fontWeight: 600 }}>Удалить</button>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 }
